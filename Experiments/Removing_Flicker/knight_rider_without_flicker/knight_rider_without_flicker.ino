@@ -15,33 +15,33 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program. If not, see http://www.gnu.org/licenses/
- 
- 
+
+
 #include <MsTimer2.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
- 
+
 const uint8_t ports = 3;
 const uint8_t brightness_levels = 32;
 const uint8_t period = 38;
 const uint8_t half_period = period>>1;  // 19
- 
- 
+
+
 #define cursor(phase) (phase<half_period? phase: period-phase)
- 
+
 #define distance_to_cursor(LED, phase) abs(LED-cursor(phase))
- 
+
 #define brightness_by_distance(distance) \
     (distance==0? 32:                   \
         (distance== 1? 16:              \
             (distance==2? 8:            \
                 (distance==3? 2: 1))))
- 
+
 #define brightness(LED, phase) (brightness_by_distance(distance_to_cursor(LED, phase)))
- 
+
 // cycle will loop from 0 to brightness_level
 #define LEDstate(LED, phase, cycle) (cycle > brightness(LED, phase)? 0: 1)
- 
+
 #define PortstateC(phase, cycle) (  \
     (LEDstate(14, phase, cycle)   ) + \
     (LEDstate(15, phase, cycle)<<1) + \
@@ -49,7 +49,7 @@ const uint8_t half_period = period>>1;  // 19
     (LEDstate(17, phase, cycle)<<3) + \
     (LEDstate(18, phase, cycle)<<4) + \
     (LEDstate(19, phase, cycle)<<5)  )
- 
+
 #define PortstateB(phase, cycle) (  \
     (LEDstate( 8, phase, cycle)   ) + \
     (LEDstate( 9, phase, cycle)<<1) + \
@@ -57,7 +57,7 @@ const uint8_t half_period = period>>1;  // 19
     (LEDstate(11, phase, cycle)<<3) + \
     (LEDstate(12, phase, cycle)<<4) + \
     (LEDstate(13, phase, cycle)<<5)  )
- 
+
 #define PortstateD(phase, cycle) (  \
     (LEDstate( 0, phase, cycle)   ) + \
     (LEDstate( 1, phase, cycle)<<1) + \
@@ -67,7 +67,7 @@ const uint8_t half_period = period>>1;  // 19
     (LEDstate( 5, phase, cycle)<<5) + \
     (LEDstate( 6, phase, cycle)<<6) + \
     (LEDstate( 7, phase, cycle)<<7)  )
- 
+
 #define Ports(phase, cycle) PortstateC(phase, cycle), PortstateB(phase, cycle), PortstateD(phase, cycle)
 #define pwm(phase) \
     Ports(phase,  0), Ports(phase,  1), Ports(phase,  2), Ports(phase,  3), \
@@ -78,10 +78,10 @@ const uint8_t half_period = period>>1;  // 19
     Ports(phase, 20), Ports(phase, 21), Ports(phase, 22), Ports(phase, 23), \
     Ports(phase, 24), Ports(phase, 25), Ports(phase, 26), Ports(phase, 27), \
     Ports(phase, 28), Ports(phase, 29), Ports(phase, 30), Ports(phase, 31)
- 
- 
-uint8_t pov_pattern[ports*brightness_levels*period] PROGMEM = {
-    pwm( 0), pwm( 1), pwm( 2), pwm( 3), pwm( 4), 
+
+
+uint8_t const pov_pattern[ports*brightness_levels*period] PROGMEM = {
+    pwm( 0), pwm( 1), pwm( 2), pwm( 3), pwm( 4),
     pwm( 5), pwm( 6), pwm( 7), pwm( 8), pwm( 9),
     pwm(10), pwm(11), pwm(12), pwm(13), pwm(14),
     pwm(15), pwm(16), pwm(17), pwm(18), pwm(19),
@@ -90,30 +90,30 @@ uint8_t pov_pattern[ports*brightness_levels*period] PROGMEM = {
     pwm(30), pwm(31), pwm(32), pwm(33), pwm(34),
     pwm(35), pwm(36), pwm(37)
 };
- 
- 
+
+
 volatile uint16_t base_index = 0;
- 
+
 void iterate() {
     base_index += ports*brightness_levels;
     if (base_index >= sizeof(pov_pattern)) { base_index = 0; }
 }
- 
+
 void setup() {
-    DDRD = 0b11111111; // set digital  0- 7 to output 
+    DDRD = 0b11111111; // set digital  0- 7 to output
     DDRB = 0b00111111; // set digital  8-13 to output
     DDRC = 0b00111111; // set digital 14-19 to output (coincidences with analog 0-5)
- 
+
     MsTimer2::set(60, iterate);
     MsTimer2::start();
 }
- 
+
 void loop() {
     static uint16_t index;
     cli();
     index = base_index;
     sei();
- 
+
     for (uint8_t cycle=0; cycle<brightness_levels; ++cycle) {
         PORTC = pgm_read_byte(pov_pattern+(index++));
         PORTB = pgm_read_byte(pov_pattern+(index++));

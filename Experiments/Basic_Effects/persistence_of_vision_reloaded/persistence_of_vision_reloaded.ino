@@ -1,10 +1,10 @@
 #include <MsTimer2.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
- 
+
 #define PARSE(pattern) ((pattern>>14) & 0b111111), ((pattern>>8) & 0b111111), (pattern & 0b11111111)
- 
-uint8_t pov_pattern[] PROGMEM = {
+
+uint8_t const pov_pattern[] PROGMEM = {
     PARSE( 0b00000000000000000000 ),
     PARSE( 0b00000000000000000000 ),
     PARSE( 0b00000000000000000000 ),
@@ -46,24 +46,24 @@ uint8_t pov_pattern[] PROGMEM = {
     PARSE( 0b00000000000000000000 ),
     PARSE( 0b00000000000000000000 ),
 };
- 
+
 void blink() {
     static uint16_t index = 0;
- 
+
     PORTC = pgm_read_byte(pov_pattern+(index++));
     PORTB = pgm_read_byte(pov_pattern+(index++));
     PORTD = pgm_read_byte(pov_pattern+(index++));
- 
+
     if (index >= sizeof(pov_pattern)) { index = 0; }
 }
- 
+
 void setup() {
     DDRD = 0b11111111; // set digital  0- 7 to output
     DDRB = 0b00111111; // set digital  8-13 to output
     DDRC = 0b00111111; // set digital 14-19 to output (coincidences with analog 0-5)
- 
+
     MsTimer2::set(2, blink);
     MsTimer2::start();
 }
- 
+
 void loop() { }

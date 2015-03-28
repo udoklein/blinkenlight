@@ -1,12 +1,12 @@
 #include <MsTimer2.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
- 
+
 const uint8_t ports = 3;
 const uint8_t brightness_levels = 32;
 const uint8_t period = 39;
- 
-uint8_t pov_pattern[ports*brightness_levels*period] PROGMEM = {
+
+uint8_t const pov_pattern[ports*brightness_levels*period] PROGMEM = {
     0b111000, 0b000000, 0b00000000, // phase  0, cycle  0
     0b110000, 0b000000, 0b00000000, // phase  0, cycle  1
     0b110000, 0b000000, 0b00000000, // phase  0, cycle  2
@@ -1256,20 +1256,20 @@ uint8_t pov_pattern[ports*brightness_levels*period] PROGMEM = {
     0b010000, 0b000000, 0b00000000, // phase 38, cycle 30
     0b010000, 0b000000, 0b00000000, // phase 38, cycle 31
 };
- 
+
 uint16_t ms_delay[period] = { 24, 19, 16, 14, 12, 11, 10, 10,  9,  9,  8,  8,  8,  7,  7,  7,  7,  6,  6,  6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9, 10, 10, 11, 12, 14, 16, 19,};
- 
+
 volatile uint16_t base_index = 0;
- 
+
 void iterate() {
     static uint8_t index = 0;
     static uint16_t counter = 0;
- 
+
     if (counter < ms_delay[index]) {
         ++counter;
     } else {
         counter = 0;
- 
+
         base_index = index*(ports*brightness_levels);
         ++index;
         if (index == period) {
@@ -1277,22 +1277,22 @@ void iterate() {
         }
     }
 }
- 
+
 void setup() {
     DDRD = 0b11111111; // set digital  0- 7 to output
     DDRB = 0b00111111; // set digital  8-13 to output
     DDRC = 0b00111111; // set digital 14-19 to output (coincidences with analog 0-5)
- 
+
     MsTimer2::set(2, iterate);
     MsTimer2::start();
 }
- 
+
 void loop() {
     static uint16_t index;
     cli();
     index = base_index;
     sei();
- 
+
     for (uint8_t cycle=0; cycle<brightness_levels; ++cycle) {
         PORTC = pgm_read_byte(pov_pattern+(index++));
         PORTB = pgm_read_byte(pov_pattern+(index++));
