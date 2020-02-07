@@ -16,19 +16,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program. If not, see http://www.gnu.org/licenses/
  
-// TRICK17 is a macro that just repeats its argument.
-// From the point of view of the C / C++ language
-// TRICK17 does nothing at all. However it tricks
-// the Arduino IDE. That is whatever is wrapped by
-// the trick macro will not be recognized as a function.
-// This in turn will disable the auto prototyping of
-// the IDE. Thus it becomes possible to use self 
-// defined types in functions signatures without
-// refraining to additional files.
-// If something comes up with a better name for this
-// trick I would be more than happy to use this name.
-#define TRICK17(x) x
- 
+namespace { 
 uint32_t power_of_ten(uint8_t exponent) {
     uint32_t result = 1;
      
@@ -60,7 +48,7 @@ char get_next_available_character() {
     return Serial.read();
 }
  
-TRICK17(fixed_point parse()) {
+fixed_point parse() {
     const char decimal_separator     = '.';
     const char terminator[] = " \t\n\r";
    
@@ -181,7 +169,7 @@ ISR(TIMER1_COMPA_vect) {
     }     
 }
  
-TRICK17(void set_target_frequency(const fixed_point target_frequency)) {
+void set_target_frequency(const fixed_point target_frequency) {
  
     // total delay time will be delay_block_tick_size * delay_blocks + tail_ticks + nominator/denominator  
     cli();
@@ -217,7 +205,7 @@ TRICK17(void set_target_frequency(const fixed_point target_frequency)) {
     Serial.print(F("tail ticks: ")); Serial.println(tail_ticks);     
     /**/
 };
- 
+} 
  
 void setup() {
     DDRD = 0b11111111; // set digital  0- 7 to output
